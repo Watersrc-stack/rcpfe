@@ -1,6 +1,10 @@
 mod graphics;
 
 use std::fs;
+use eframe::egui::Context;
+use eframe::Frame;
+use eframe::egui;
+use eframe::egui::debug_text::print;
 
 struct Flags {
     a: bool, // Hidden files
@@ -79,7 +83,9 @@ struct App {
     default_path: String,
     current_path: String,
     flags: Flags,
-    entries: Vec<MyEntries>
+    entries: Vec<MyEntries>,
+    name: String,
+    age: u32,
 }
 
 impl Default for App {
@@ -98,7 +104,10 @@ impl Default for App {
             default_path,
             current_path,
             flags,
-            entries
+            entries,
+
+            name: "alice".to_string(),
+            age: 0,
         }
     }
 }
@@ -111,9 +120,38 @@ impl App {
     }
 }
 
+impl eframe::App for App {
+    fn update(&mut self, ctx: &Context, frame: &mut Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("RCPFE");
+/*            ui.horizontal(|ui| {
+                ui.label("Your name: ");
+                ui.text_edit_singleline(&mut self.name);
+            });
+            
+            ui.add(egui::Slider::new(&mut self.age, 0..=120).text("Age"));
+            if ui.button("Click me!").clicked() {
+                println!("Hello, {}! You are {} years old.", self.name, self.age);
+            }*/
 
-pub fn main() -> iced::Result {
+            for ent in &self.entries {
+                if ui.button(&ent.name).clicked() {
+                    // self.change_dir(ent.item.path())
+                    println!("Change dir to {}", ent.item.file_name().to_string_lossy())
+                }
+            }
 
 
-    iced::run(graphics::GUI::update, graphics::GUI::view)
+        });
+    }
+
+}
+
+
+pub fn main() -> Result<(), eframe::Error>{
+    eframe::run_native(
+        "rcpfe",
+        eframe::NativeOptions::default(),
+        Box::new(|_| Ok(Box::new(App::default()))),
+    )
 }
