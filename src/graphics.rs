@@ -6,6 +6,7 @@ use crate::{read_dir_sorted, Flags, MyEntry};
 
 pub struct App {
     pub current_path: PathBuf,
+    pub path_edit_buffer: String,
     pub flags: Flags,
     pub entries: Vec<MyEntry>,
 }
@@ -13,11 +14,13 @@ pub struct App {
 impl Default for App {
     fn default() -> Self {
         let current_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let path_edit_buffer = current_path.to_string_lossy().to_string();
         let flags = Flags { a: false };
         let entries = read_dir_sorted(&current_path, flags.a);
 
         App {
             current_path,
+            path_edit_buffer,
             flags,
             entries,
         }
@@ -28,6 +31,7 @@ impl App {
     pub fn change_dir(&mut self, new_path: PathBuf) {
         if new_path.is_dir() {
             self.current_path = new_path;
+            self.path_edit_buffer = self.current_path.to_string_lossy().to_string();
             self.entries = read_dir_sorted(&self.current_path, self.flags.a);
         }
     }
@@ -38,7 +42,14 @@ impl eframe::App for App {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("RCPFE");
             ui.horizontal(|ui| {
-                ui.label(format!("Current path: {}", self.current_path.display()));
+
+                ui.label("Current path: ");
+                let response = ui.text_edit_singleline(&mut self.path_edit_buffer);
+
+                if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    self.change_dir(PathBuf::from(&self.path_edit_buffer));
+                }
+
                 if ui.checkbox(&mut self.flags.a, "Show hidden").changed() {
                     self.entries = read_dir_sorted(&self.current_path, self.flags.a);
                 }
