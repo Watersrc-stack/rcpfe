@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use eframe::egui::Context;
+use eframe::egui::{Context};
 use eframe::Frame;
 use eframe::egui;
 use crate::{read_dir_sorted, Flags, MyEntry};
@@ -67,23 +67,25 @@ impl eframe::App for App {
 
             egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
                 for ent in &self.entries {
-                    let label = if ent.is_dir {
-                        format!("D {}", ent.name)
-                    } else {
-                        format!("F {}", ent.name)
-                    };
 
-                    if ui.button(label).clicked() {
+                    let img = if ent.is_dir { egui::Image::new("file://assets/folder.png")
+                    } else { egui::Image::new("file://assets/file.png") };
+
+                    let btn = egui::Button::image_and_text(img, &ent.name);
+
+                    if ui.add(btn).clicked() {
                         if ent.is_dir {
                             next_path = Some(ent.path.clone());
                         }
                     }
+
                 }
             });
 
             if let Some(path) = next_path {
                 self.change_dir(path);
             }
+
         });
     }
 }

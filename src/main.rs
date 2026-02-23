@@ -2,6 +2,8 @@ mod graphics;
 
 use std::fs;
 use std::path::{Path, PathBuf};
+
+
 use crate::graphics::App;
 
 pub struct Flags {
@@ -41,11 +43,14 @@ pub fn read_dir_sorted(path: impl AsRef<Path>, show_hidden: bool) -> Vec<MyEntry
     entries
 }
 
-
 pub fn main() -> Result<(), eframe::Error>{
+
     eframe::run_native(
         "rcpfe",
         eframe::NativeOptions::default(),
-        Box::new(|_| Ok(Box::new(App::default()))),
+        Box::new(|cc| {
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+            Ok(Box::new(App::default()))
+        }),
     )
 }
