@@ -3,6 +3,7 @@ use eframe::egui::{Context};
 use eframe::Frame;
 use eframe::egui;
 use crate::{read_dir_sorted, Flags, MyEntry};
+use crate::element::{Element, ElementStyle};
 
 pub struct App {
     pub current_path: PathBuf,
@@ -71,14 +72,19 @@ impl eframe::App for App {
                     let img = if ent.is_dir { egui::Image::new("file://assets/folder.png")
                     } else { egui::Image::new("file://assets/file.png") };
 
-                    let btn = egui::Button::image_and_text(img, &ent.name);
+                    let mut element: Element = Element::new(img, [128.0, 128.0], &ent.name);
+                    element.set_style(ElementStyle::List);
+
+                    ui.add(element);
+
+/*                    let btn = egui::Button::image_and_text(img, &ent.name);
 
                     if ui.add(btn).clicked() {
                         if ent.is_dir {
                             next_path = Some(ent.path.clone());
                         }
                     }
-
+*/
                 }
             });
 
