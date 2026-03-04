@@ -1,12 +1,9 @@
 use std::fmt::Debug;
-use core::f32;
 use std::fs;
 use std::path::PathBuf;
 use eframe::egui::{Context, ScrollArea};
 use eframe::Frame;
 use eframe::egui;
-use eframe::egui::Widget;
-use eframe::egui::accesskit::SortDirection;
 use crate::{read_dir_sorted, Flags, MyEntry};
 use crate::element::{Element, ElementStyle};
 
@@ -21,7 +18,7 @@ pub struct App {
     pub path_edit_buffer: String,
     pub flags: Flags,
     pub entries: Vec<MyEntry>,
-    pub style: AppStyle
+    pub style: AppStyle,
     pub file_content: String,
 }
 
@@ -38,7 +35,7 @@ impl Default for App {
             path_edit_buffer,
             flags,
             entries,
-            style: AppStyle::Icons
+            style: AppStyle::Icons,
             file_content : String::new(),
         }
     }
@@ -98,7 +95,7 @@ impl eframe::App for App {
 
             ui.separator();
 
-            egui::ScrollArea::vertical().id_salt("text_display").auto_shrink([true; 2]).max_height(150.0).show(ui, |ui| {
+            ScrollArea::vertical().id_salt("text_display").auto_shrink([true; 2]).max_height(150.0).show(ui, |ui| {
                 ui.text_edit_multiline(&mut self.file_content);
             });
             ui.separator();
@@ -117,13 +114,7 @@ impl eframe::App for App {
                     scroll = scroll.auto_shrink([false; 2])
                 }
             };
-            egui::ScrollArea::vertical().id_salt("file_list").auto_shrink([false; 2]).show(ui, |ui| {
-                for ent in &self.entries {
-                    let label = if ent.is_dir {
-                        format!("D {}", ent.name)
-                    } else {
-                        format!("F {}", ent.name)
-                    };
+            ScrollArea::vertical().id_salt("file_list").auto_shrink([false; 2]).show(ui, |ui| {
 
             scroll.scroll_bar_visibility(egui::containers::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
@@ -163,5 +154,7 @@ impl eframe::App for App {
                 self.get_file_buffer(file_buffer);
             }
         });
-    }
+    });
+}
+
 }

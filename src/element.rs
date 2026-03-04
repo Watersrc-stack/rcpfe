@@ -1,4 +1,3 @@
-use std::ops::Add;
 use eframe::egui;
 use eframe::egui::{Label, Layout, Response, Sense, Ui, Vec2};
 use egui::Image;
