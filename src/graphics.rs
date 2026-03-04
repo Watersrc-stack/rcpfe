@@ -1,8 +1,12 @@
 use std::fmt::Debug;
+use core::f32;
+use std::fs;
 use std::path::PathBuf;
 use eframe::egui::{Context, ScrollArea};
 use eframe::Frame;
 use eframe::egui;
+use eframe::egui::Widget;
+use eframe::egui::accesskit::SortDirection;
 use crate::{read_dir_sorted, Flags, MyEntry};
 use crate::element::{Element, ElementStyle};
 
@@ -18,6 +22,7 @@ pub struct App {
     pub flags: Flags,
     pub entries: Vec<MyEntry>,
     pub style: AppStyle
+    pub file_content: String,
 }
 
 
@@ -34,6 +39,7 @@ impl Default for App {
             flags,
             entries,
             style: AppStyle::Icons
+            file_content : String::new(),
         }
     }
 }
@@ -45,6 +51,16 @@ impl App {
             self.path_edit_buffer = self.current_path.to_string_lossy().to_string();
             self.entries = read_dir_sorted(&self.current_path, self.flags.a);
         }
+    }
+    pub fn get_file_buffer(&mut self, file_path: PathBuf) {
+        if file_path.is_file() {
+            let file_buffer = fs::read_to_string(file_path);
+            match file_buffer {
+                Ok(n) =>  self.file_content = n,
+                Err(n) => eprintln!("Error occured when reading a file : {n}"),
+            }
+        }
+
     }
 }
 
@@ -82,7 +98,13 @@ impl eframe::App for App {
 
             ui.separator();
 
+            egui::ScrollArea::vertical().id_salt("text_display").auto_shrink([true; 2]).max_height(150.0).show(ui, |ui| {
+                ui.text_edit_multiline(&mut self.file_content);
+            });
+            ui.separator();
+
             let mut next_path = None;
+            let mut file_path = None;
 
             let mut scroll: ScrollArea = ScrollArea::vertical();
 
@@ -95,6 +117,13 @@ impl eframe::App for App {
                     scroll = scroll.auto_shrink([false; 2])
                 }
             };
+            egui::ScrollArea::vertical().id_salt("file_list").auto_shrink([false; 2]).show(ui, |ui| {
+                for ent in &self.entries {
+                    let label = if ent.is_dir {
+                        format!("D {}", ent.name)
+                    } else {
+                        format!("F {}", ent.name)
+                    };
 
             scroll.scroll_bar_visibility(egui::containers::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
@@ -118,6 +147,8 @@ impl eframe::App for App {
                         if ui.add(element).clicked() {
                         if ent.is_dir {
                             next_path = Some(ent.path.clone());
+                        } else {
+                            file_path = Some(ent.path.clone());
                         }
                     }
 
@@ -128,6 +159,9 @@ impl eframe::App for App {
                 self.change_dir(path);
             }
 
+            if let Some(file_buffer) = file_path {
+                self.get_file_buffer(file_buffer);
+            }
         });
     }
 }
