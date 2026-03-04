@@ -1,16 +1,26 @@
+use std::any::Any;
+use std::fmt::Debug;
 use std::path::PathBuf;
-use eframe::egui::{Context};
+use eframe::egui::{Context, ScrollArea};
 use eframe::Frame;
 use eframe::egui;
 use crate::{read_dir_sorted, Flags, MyEntry};
 use crate::element::{Element, ElementStyle};
+
+#[derive(Debug)]
+pub enum AppStyle {
+    Icons,
+    List
+}
 
 pub struct App {
     pub current_path: PathBuf,
     pub path_edit_buffer: String,
     pub flags: Flags,
     pub entries: Vec<MyEntry>,
+    pub style: AppStyle
 }
+
 
 impl Default for App {
     fn default() -> Self {
@@ -24,6 +34,7 @@ impl Default for App {
             path_edit_buffer,
             flags,
             entries,
+            style: AppStyle::Icons
         }
     }
 }
@@ -54,6 +65,14 @@ impl eframe::App for App {
                 if ui.checkbox(&mut self.flags.a, "Show hidden").changed() {
                     self.entries = read_dir_sorted(&self.current_path, self.flags.a);
                 }
+
+                if ui.button("Toggle icons").clicked() {
+                    match self.style {
+                        AppStyle::Icons => self.style = AppStyle::List,
+                        AppStyle::List => self.style = AppStyle::Icons,
+                    }
+                }
+
             });
 
             if let Some(parent) = self.current_path.parent() {
@@ -66,25 +85,43 @@ impl eframe::App for App {
 
             let mut next_path = None;
 
-            egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-                for ent in &self.entries {
+            let mut scroll: ScrollArea = ScrollArea::vertical();
+
+            let _ = match self.style {
+                AppStyle::Icons => {
+                    scroll = scroll.auto_shrink([true, false])
+                }
+
+                AppStyle::List => {
+                    scroll = scroll.auto_shrink([false; 2])
+                }
+            };
+
+            scroll.scroll_bar_visibility(egui::containers::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                .show(ui, |ui| {
+
+                    for ent in &self.entries {
 
                     let img = if ent.is_dir { egui::Image::new("file://assets/folder.png")
                     } else { egui::Image::new("file://assets/file.png") };
 
-                    let mut element: Element = Element::new(img, [128.0, 128.0], &ent.name);
-                    element.set_style(ElementStyle::List);
+                    let element: Element;
 
-                    ui.add(element);
+                    match self.style {
+                        AppStyle::Icons => {
+                            element = Element::new(img, [24.0, 24.0], &ent.name, ElementStyle::Icons);
+                        }
+                        AppStyle::List => {
+                            element = Element::new(img, [24.0, 24.0], &ent.name, ElementStyle::List);
+                        }
+                    }
 
-/*                    let btn = egui::Button::image_and_text(img, &ent.name);
-
-                    if ui.add(btn).clicked() {
+                        if ui.add(element).clicked() {
                         if ent.is_dir {
                             next_path = Some(ent.path.clone());
                         }
                     }
-*/
+
                 }
             });
 

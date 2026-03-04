@@ -1,5 +1,7 @@
+use std::fmt::Alignment::Center;
+use std::ops::Add;
 use eframe::egui;
-use eframe::egui::{Label, Response, Ui, Vec2};
+use eframe::egui::{Align, Color32, Label, Layout, Rect, Response, Sense, Stroke, Style, Ui, UiBuilder, Vec2};
 use egui::Image;
 
 
@@ -13,32 +15,41 @@ pub struct Element <'a> {
     pub img: Image <'a>,
     pub image_size: [f32; 2],
     pub text: String,
-    pub style: ElementStyle
+    pub style: ElementStyle,
+    icon_size: Vec2
 }
 
 impl Element <'_> {
-    pub fn new<'a>(img: Image<'a>, image_size: [f32; 2], rtext: &'a String) -> Element <'a> {
+    pub fn new<'a>(img: Image<'a>, image_size: [f32; 2], rtext: &'a String, style: ElementStyle) -> Element <'a> {
         Element {
             img,
             image_size,
             text: rtext.clone(),
-            style: ElementStyle::Icons
+            style,
+            icon_size: Vec2::new(120.0, 120.0)
         }
     }
-
-    pub fn set_style(&mut self, style: ElementStyle) {
-        self.style = style;
-    }
-
-
 }
+
 impl egui::Widget for Element<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
 
         match self.style {
             ElementStyle::Icons => {
-                ui.add_sized(self.image_size, self.img);
-                ui.add(Label::new(self.text))
+
+                let (rect, response) = ui.allocate_exact_size(self.icon_size, Sense::click());
+
+                ui.scope_builder(
+                    egui::UiBuilder::new()
+                        .max_rect(rect)
+                        .layout(Layout::centered_and_justified(egui::Direction::TopDown)),
+                    |ui| {
+                        ui.add_sized(self.image_size, self.img);
+                        ui.add(Label::new(self.text));
+                    },
+                );
+
+                response
             }
             ElementStyle::List => {
                 let btn: egui::Button = egui::Button::image_and_text(self.img, self.text);
