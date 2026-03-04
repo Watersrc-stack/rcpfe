@@ -1,20 +1,27 @@
-use core::f32;
+use std::fmt::Debug;
 use std::fs;
 use std::path::PathBuf;
-use eframe::egui::Context;
+use eframe::egui::{Context, ScrollArea};
 use eframe::Frame;
 use eframe::egui;
-use eframe::egui::Widget;
-use eframe::egui::accesskit::SortDirection;
 use crate::{read_dir_sorted, Flags, MyEntry};
+use crate::element::{Element, ElementStyle};
+
+#[derive(Debug)]
+pub enum AppStyle {
+    Icons,
+    List
+}
 
 pub struct App {
     pub current_path: PathBuf,
     pub path_edit_buffer: String,
     pub flags: Flags,
     pub entries: Vec<MyEntry>,
+    pub style: AppStyle,
     pub file_content: String,
 }
+
 
 impl Default for App {
     fn default() -> Self {
@@ -28,6 +35,7 @@ impl Default for App {
             path_edit_buffer,
             flags,
             entries,
+            style: AppStyle::Icons,
             file_content : String::new(),
         }
     }
@@ -69,6 +77,14 @@ impl eframe::App for App {
                 if ui.checkbox(&mut self.flags.a, "Show hidden").changed() {
                     self.entries = read_dir_sorted(&self.current_path, self.flags.a);
                 }
+
+                if ui.button("Toggle icons").clicked() {
+                    match self.style {
+                        AppStyle::Icons => self.style = AppStyle::List,
+                        AppStyle::List => self.style = AppStyle::Icons,
+                    }
+                }
+
             });
 
             if let Some(parent) = self.current_path.parent() {
@@ -79,7 +95,7 @@ impl eframe::App for App {
 
             ui.separator();
 
-            egui::ScrollArea::vertical().id_salt("text_display").auto_shrink([true; 2]).max_height(150.0).show(ui, |ui| {
+            ScrollArea::vertical().id_salt("text_display").auto_shrink([true; 2]).max_height(150.0).show(ui, |ui| {
                 ui.text_edit_multiline(&mut self.file_content);
             });
             ui.separator();
@@ -87,30 +103,58 @@ impl eframe::App for App {
             let mut next_path = None;
             let mut file_path = None;
 
-            egui::ScrollArea::vertical().id_salt("file_list").auto_shrink([false; 2]).show(ui, |ui| {
-                for ent in &self.entries {
-                    let label = if ent.is_dir {
-                        format!("D {}", ent.name)
-                    } else {
-                        format!("F {}", ent.name)
-                    };
+            let mut scroll: ScrollArea = ScrollArea::vertical();
 
-                    if ui.button(label).clicked() {
+            let _ = match self.style {
+                AppStyle::Icons => {
+                    scroll = scroll.auto_shrink([true, false])
+                }
+
+                AppStyle::List => {
+                    scroll = scroll.auto_shrink([false; 2])
+                }
+            };
+            ScrollArea::vertical().id_salt("file_list").auto_shrink([false; 2]).show(ui, |ui| {
+
+            scroll.scroll_bar_visibility(egui::containers::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                .show(ui, |ui| {
+
+                    for ent in &self.entries {
+
+                    let img = if ent.is_dir { egui::Image::new("file://assets/folder.png")
+                    } else { egui::Image::new("file://assets/file.png") };
+
+                    let element: Element;
+
+                    match self.style {
+                        AppStyle::Icons => {
+                            element = Element::new(img, [24.0, 24.0], &ent.name, ElementStyle::Icons);
+                        }
+                        AppStyle::List => {
+                            element = Element::new(img, [24.0, 24.0], &ent.name, ElementStyle::List);
+                        }
+                    }
+
+                        if ui.add(element).clicked() {
                         if ent.is_dir {
                             next_path = Some(ent.path.clone());
                         } else {
                             file_path = Some(ent.path.clone());
                         }
                     }
+
                 }
             });
 
             if let Some(path) = next_path {
                 self.change_dir(path);
             }
+
             if let Some(file_buffer) = file_path {
                 self.get_file_buffer(file_buffer);
             }
         });
-    }
+    });
+}
+
 }
