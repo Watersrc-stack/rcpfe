@@ -1,7 +1,6 @@
-use std::fmt::Alignment::Center;
 use std::ops::Add;
 use eframe::egui;
-use eframe::egui::{Align, Color32, Label, Layout, Rect, Response, Sense, Stroke, Style, Ui, UiBuilder, Vec2};
+use eframe::egui::{Label, Layout, Response, Sense, Ui, Vec2};
 use egui::Image;
 
 

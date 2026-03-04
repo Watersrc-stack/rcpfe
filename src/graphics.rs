@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::fmt::Debug;
 use std::path::PathBuf;
 use eframe::egui::{Context, ScrollArea};
