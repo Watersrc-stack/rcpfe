@@ -40,10 +40,10 @@ impl egui::Widget for Element<'_> {
                 ui.scope_builder(
                     egui::UiBuilder::new()
                         .max_rect(rect)
-                        .layout(Layout::centered_and_justified(egui::Direction::TopDown)),
+                        .layout(Layout::top_down(egui::Align::Center)),
                     |ui| {
-                        ui.add_sized(self.image_size, self.img);
-                        ui.add(Label::new(self.text));
+                        ui.add(self.img.fit_to_exact_size(self.image_size.into()));
+                        ui.add(Label::new(self.text).wrap_mode(egui::TextWrapMode::Truncate));
                     },
                 );
 
